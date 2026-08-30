@@ -1,13 +1,20 @@
 import { useEffect, useState, type ReactNode } from 'react'
-import { BrowserRouter, Link, Navigate, Route, Routes, useNavigate } from 'react-router-dom'
-import { logout, restoreSession } from './api/auth'
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
+import { restoreSession } from './api/auth'
 import { useSession } from './auth/useSession'
+import { Spinner, Text } from './components/atoms'
+import { AppShell } from './components/templates'
 import { homeFor } from './routes'
-import { AlertDetailScreen } from './screens/AlertDetailScreen'
-import { InboxScreen } from './screens/InboxScreen'
-import { LoginScreen } from './screens/LoginScreen'
-import { StudentViewScreen } from './screens/StudentViewScreen'
-import { WellbeingScreen } from './screens/WellbeingScreen'
+import { LoginPage } from './pages/LoginPage'
+import { AdvisorStudentsPage } from './pages/AdvisorStudentsPage'
+import { AdvisorStudentCasePage } from './pages/AdvisorStudentCasePage'
+import { StudentInformationDisplayPage } from './pages/StudentInformationDisplayPage'
+import { AdvisorAlertsPage } from './pages/AdvisorAlertsPage'
+import { AdvisorAlertDetailPage } from './pages/AdvisorAlertDetailPage'
+import { AdvisorInterventionsPage } from './pages/AdvisorInterventionsPage'
+import { AdvisorReportsPage } from './pages/AdvisorReportsPage'
+import { StudentOverviewPage } from './pages/StudentOverviewPage'
+import { StudentSafeSpacePage } from './pages/StudentSafeSpacePage'
 
 function RequireRole({ roles, children }: { roles: string[]; children: ReactNode }) {
   const { authenticated, profile } = useSession()
@@ -16,47 +23,23 @@ function RequireRole({ roles, children }: { roles: string[]; children: ReactNode
   }
   if (!roles.some((role) => profile.roles.includes(role))) {
     return (
-      <main className="narrow">
-        <p className="notice error">
-          <strong>Not allowed</strong> — this screen is not available for your role.
-        </p>
-        <Link to={homeFor(profile.roles)}>Go to my home</Link>
-      </main>
+      <AppShell>
+        <Text variant="label" color="var(--color-danger)">
+          No tienes acceso a esta sección.
+        </Text>
+      </AppShell>
     )
   }
   return children
-}
-
-function TopBar() {
-  const { authenticated, profile } = useSession()
-  const navigate = useNavigate()
-  if (!authenticated || !profile) {
-    return null
-  }
-  return (
-    <nav className="topbar">
-      <Link to={homeFor(profile.roles)} className="brand">
-        Student 360°
-      </Link>
-      <span className="muted">
-        {profile.fullName} · {profile.roles.join(', ')}
-      </span>
-      <button
-        className="link"
-        onClick={() => {
-          void logout().finally(() => navigate('/login', { replace: true }))
-        }}
-      >
-        Sign out
-      </button>
-    </nav>
-  )
 }
 
 function Home() {
   const { authenticated, profile } = useSession()
   return <Navigate to={authenticated && profile ? homeFor(profile.roles) : '/login'} replace />
 }
+
+const ADVISOR_ROLES = ['ADVISOR', 'ADMIN']
+const STUDENT_ROLES = ['STUDENT']
 
 export default function App() {
   const [restoring, setRestoring] = useState(true)
@@ -67,47 +50,89 @@ export default function App() {
   }, [])
 
   if (restoring) {
-    return <p className="muted centered">Restoring session…</p>
+    return <Spinner center />
   }
 
   return (
     <BrowserRouter>
-      <TopBar />
       <Routes>
         <Route path="/" element={<Home />} />
-        <Route path="/login" element={<LoginScreen />} />
+        <Route path="/login" element={<LoginPage />} />
+
         <Route
-          path="/me"
+          path="/advisor/students"
           element={
-            <RequireRole roles={['STUDENT']}>
-              <StudentViewScreen />
+            <RequireRole roles={ADVISOR_ROLES}>
+              <AdvisorStudentsPage />
             </RequireRole>
           }
         />
         <Route
-          path="/wellbeing"
+          path="/advisor/students/:studentId"
           element={
-            <RequireRole roles={['STUDENT']}>
-              <WellbeingScreen />
+            <RequireRole roles={ADVISOR_ROLES}>
+              <AdvisorStudentCasePage />
             </RequireRole>
           }
         />
         <Route
-          path="/inbox"
+          path="/advisor/students/:studentId/profile"
           element={
-            <RequireRole roles={['ADVISOR', 'ADMIN']}>
-              <InboxScreen />
+            <RequireRole roles={ADVISOR_ROLES}>
+              <StudentInformationDisplayPage />
             </RequireRole>
           }
         />
         <Route
-          path="/alerts/:id"
+          path="/advisor/alerts"
           element={
-            <RequireRole roles={['ADVISOR', 'ADMIN']}>
-              <AlertDetailScreen />
+            <RequireRole roles={ADVISOR_ROLES}>
+              <AdvisorAlertsPage />
             </RequireRole>
           }
         />
+        <Route
+          path="/advisor/alerts/:alertId"
+          element={
+            <RequireRole roles={ADVISOR_ROLES}>
+              <AdvisorAlertDetailPage />
+            </RequireRole>
+          }
+        />
+        <Route
+          path="/advisor/interventions"
+          element={
+            <RequireRole roles={ADVISOR_ROLES}>
+              <AdvisorInterventionsPage />
+            </RequireRole>
+          }
+        />
+        <Route
+          path="/advisor/reports"
+          element={
+            <RequireRole roles={ADVISOR_ROLES}>
+              <AdvisorReportsPage />
+            </RequireRole>
+          }
+        />
+
+        <Route
+          path="/me/overview"
+          element={
+            <RequireRole roles={STUDENT_ROLES}>
+              <StudentOverviewPage />
+            </RequireRole>
+          }
+        />
+        <Route
+          path="/me/safe-space"
+          element={
+            <RequireRole roles={STUDENT_ROLES}>
+              <StudentSafeSpacePage />
+            </RequireRole>
+          }
+        />
+
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
