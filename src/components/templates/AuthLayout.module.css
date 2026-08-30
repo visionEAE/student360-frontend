@@ -1,0 +1,2 @@
+.layout { display: flex; min-height: 100vh; background: var(--color-surface); }
+.formPanel { flex: 1; display: flex; align-items: center; justify-content: center; }
