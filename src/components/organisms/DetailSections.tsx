@@ -184,7 +184,9 @@ export function WellbeingSection({ summary }: { summary: WellbeingSummary }) {
   const bars: BarDatum[] = summary.weekly.map((week, index) => ({
     label: `S${index + 1}`,
     valueLabel: levelShortLabel(week.level),
-    ratio: week.level === null ? 0 : week.level / 4,
+    // A week with no entry omits `level` from the JSON entirely rather than nulling it, so
+    // `typeof` catches that `undefined` case too — `=== null` alone left it as NaN (bar height).
+    ratio: typeof week.level === 'number' ? week.level / 4 : 0,
     color: TONE_COLOR[levelTone(week.level)],
   }))
   return (
