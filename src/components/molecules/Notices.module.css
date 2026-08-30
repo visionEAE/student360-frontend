@@ -1,0 +1,3 @@
+.error { display: flex; flex-direction: column; gap: 4px; padding: var(--space-6); background: var(--color-danger-tint); color: var(--color-danger); border-radius: var(--radius-lg); }
+.empty { padding: var(--space-9); text-align: center; }
+.unavailable { display: flex; flex-direction: column; align-items: center; gap: var(--space-3); padding: var(--space-9); background: var(--color-canvas); border: 1px dashed var(--color-border); border-radius: var(--radius-card); text-align: center; }
