@@ -337,6 +337,33 @@ export interface PersonRefInput {
   reference?: string
   kind: PersonKind
   displayName?: string
+  /** Only meaningful for people core-service has no record of; see ContactView.source. */
+  email?: string
+  phone?: string
+  summary?: string
+}
+
+/**
+ * `DIRECTORY` — resolved from core-service's directory (a professor, a fellow student).
+ * `SELF_REPORTED` — typed in by whoever added the person (family, a friend, an advisor).
+ * `NONE` — nothing on file, including when the directory could not be reached.
+ */
+export type ContactSource = 'DIRECTORY' | 'SELF_REPORTED' | 'NONE'
+
+export interface ContactView {
+  email: string | null
+  phone: string | null
+  summary: string | null
+  /** Program or department — only ever present for a DIRECTORY-resolved person. */
+  headline: string | null
+  source: ContactSource
+}
+
+export interface ConnectionDetail {
+  studentId: string
+  person: PersonView
+  contact: ContactView
+  edges: EdgeView[]
 }
 
 export interface UpsertConnectionRequest {
