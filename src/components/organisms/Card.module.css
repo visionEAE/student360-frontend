@@ -1,0 +1,2 @@
+.card { display: flex; flex-direction: column; gap: var(--space-7); padding: var(--space-9); background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-card); }
+.tint { background: var(--color-danger-tint); border-color: #d94f4f33; }
