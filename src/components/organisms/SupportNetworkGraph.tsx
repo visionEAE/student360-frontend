@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { forceCenter, forceCollide, forceLink, forceManyBody, forceSimulation, type Simulation } from 'd3-force'
 import { drag as d3drag } from 'd3-drag'
 import { select } from 'd3-selection'
@@ -30,11 +30,17 @@ interface Props {
 }
 
 /**
- * A force-directed graph: the student is a fixed-ish center node, every connection is a node
- * around it, and every rated edge is a line whose thickness/opacity scales with its weight.
- * Positions are driven entirely by the d3-force simulation via its own React-independent tick
- * loop, mutating a ref'd node/link array and re-rendering through a version counter — cheap at
- * this graph's scale (a person's support network rarely exceeds a couple dozen people).
+ * A force-directed graph: the student is a center node, every connection is a node around it,
+ * every rated edge a line whose thickness/opacity scales with its weight.
+ *
+ * d3-force owns only the physics: it mutates `node.x/y` (and `link.source/target`, replacing the
+ * raw string ids with the actual node objects) in place on every tick. React owns every DOM
+ * element it renders. The two are kept strictly separate: nothing here calls d3's `selectAll(...)
+ * .data(...)` against elements React created — doing so was the original bug, since a d3 keyed
+ * join calls its key function against each element's already-bound datum too, and an element
+ * React rendered has none (`undefined`), so `undefined.id` threw and crashed the whole page.
+ * Position updates instead go through a `tick` counter that forces a re-render, so JSX simply
+ * reads the latest mutated `x`/`y` off the same node objects the simulation is animating.
  */
 export function SupportNetworkGraph({ studentDisplayName, network, selectedId, onSelect, height = 460 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
@@ -42,8 +48,12 @@ export function SupportNetworkGraph({ studentDisplayName, network, selectedId, o
   const zoomLayerRef = useRef<SVGGElement>(null)
   const simulationRef = useRef<Simulation<GraphNode, GraphLink> | null>(null)
   const zoomBehaviorRef = useRef<ZoomBehavior<SVGSVGElement, unknown> | null>(null)
+  const nodeElementsRef = useRef(new Map<string, SVGGElement>())
 
-  const { nodes, links } = useMemo(() => buildGraphData(studentDisplayName, network), [studentDisplayName, network]);
+  const { nodes, links } = useMemo(() => buildGraphData(studentDisplayName, network), [studentDisplayName, network])
+  // Bumped on every simulation tick so React re-renders with the positions d3 just mutated —
+  // the only channel through which the simulation's output reaches the DOM.
+  const [, forceRender] = useState(0)
 
   useEffect(() => {
     const svgEl = svgRef.current
@@ -63,6 +73,7 @@ export function SupportNetworkGraph({ studentDisplayName, network, selectedId, o
       .force('charge', forceManyBody().strength(-260))
       .force('center', forceCenter(width / 2, height / 2))
       .force('collide', forceCollide((node) => (node.isCenter ? CENTER_RADIUS : NODE_RADIUS) + 14))
+      .on('tick', () => forceRender((tick) => tick + 1))
     simulationRef.current = simulation
 
     const svg = select(svgEl)
@@ -73,7 +84,22 @@ export function SupportNetworkGraph({ studentDisplayName, network, selectedId, o
     svg.call(zoomBehavior)
     zoomBehaviorRef.current = zoomBehavior
 
-    const nodeSelection = zoomLayer.selectAll<SVGGElement, GraphNode>('.support-network-node').data(nodes, (node) => node.id)
+    return () => {
+      simulation.stop()
+    }
+    // Rebuilding the whole simulation when the data changes keeps this simple; the graph is small
+    // enough that a full re-layout on every mutation is not noticeable.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [nodes, links, height])
+
+  // Drag, attached per node once its DOM element exists. Each element's datum is bound
+  // explicitly via `.datum(node)` right before the call — never inferred from the DOM the way a
+  // `selectAll(...).data(...)` join would, which is what made the crash this replaces possible.
+  useEffect(() => {
+    const simulation = simulationRef.current
+    if (!simulation) {
+      return
+    }
     const dragBehavior = d3drag<SVGGElement, GraphNode>()
       .on('start', (event, node) => {
         if (!event.active) {
@@ -93,25 +119,13 @@ export function SupportNetworkGraph({ studentDisplayName, network, selectedId, o
         node.fx = null
         node.fy = null
       })
-    nodeSelection.call(dragBehavior)
-
-    simulation.on('tick', () => {
-      zoomLayer
-        .selectAll<SVGLineElement, GraphLink>('.support-network-link')
-        .attr('x1', (link) => perpendicular(link, 'x1'))
-        .attr('y1', (link) => perpendicular(link, 'y1'))
-        .attr('x2', (link) => perpendicular(link, 'x2'))
-        .attr('y2', (link) => perpendicular(link, 'y2'))
-      zoomLayer.selectAll<SVGGElement, GraphNode>('.support-network-node').attr('transform', (node) => `translate(${node.x ?? 0},${node.y ?? 0})`)
-    })
-
-    return () => {
-      simulation.stop()
+    for (const node of nodes) {
+      const element = nodeElementsRef.current.get(node.id)
+      if (element) {
+        select(element).datum(node).call(dragBehavior)
+      }
     }
-    // Rebuilding the whole simulation when the data changes keeps this simple; the graph is small
-    // enough that a full re-layout on every mutation is not noticeable.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [nodes, links, height])
+  }, [nodes])
 
   const zoomBy = (factor: number) => {
     const svg = svgRef.current
@@ -128,24 +142,45 @@ export function SupportNetworkGraph({ studentDisplayName, network, selectedId, o
     }
   }
 
+  const nodesById = useMemo(() => new Map(nodes.map((node) => [node.id, node])), [nodes])
+
   return (
     <div ref={containerRef} className={styles.wrap} style={{ height }}>
       <svg ref={svgRef} className={styles.svg} role="img" aria-label="Red de apoyo">
         <g ref={zoomLayerRef}>
-          {links.map((link) => (
-            <line
-              key={link.id}
-              className="support-network-link"
-              stroke={link.ratedBy === 'SELF' ? 'var(--color-primary)' : 'var(--color-text-muted)'}
-              strokeWidth={1 + link.weight * 0.9}
-              strokeOpacity={0.25 + link.weight * 0.065}
-              strokeDasharray={link.ratedBy === 'SUPPORT_TEAM' ? '4 3' : undefined}
-            />
-          ))}
+          {links.map((link) => {
+            const source = resolveEndpoint(link.source, nodesById)
+            const target = resolveEndpoint(link.target, nodesById)
+            if (!source || !target) {
+              return null
+            }
+            const { x1, y1, x2, y2 } = perpendicularPoints(source, target, link.offset)
+            return (
+              <line
+                key={link.id}
+                x1={x1}
+                y1={y1}
+                x2={x2}
+                y2={y2}
+                stroke={link.ratedBy === 'SELF' ? 'var(--color-primary)' : 'var(--color-text-muted)'}
+                strokeWidth={1 + link.weight * 0.9}
+                strokeOpacity={0.25 + link.weight * 0.065}
+                strokeDasharray={link.ratedBy === 'SUPPORT_TEAM' ? '4 3' : undefined}
+              />
+            )
+          })}
           {nodes.map((node) => (
             <g
               key={node.id}
-              className={`support-network-node ${styles.node}`}
+              ref={(element) => {
+                if (element) {
+                  nodeElementsRef.current.set(node.id, element)
+                } else {
+                  nodeElementsRef.current.delete(node.id)
+                }
+              }}
+              className={styles.node}
+              transform={`translate(${node.x ?? 0},${node.y ?? 0})`}
               onClick={() => onSelect(node.id === STUDENT_NODE_ID ? null : node.id)}
             >
               {node.isPrimary ? (
@@ -185,10 +220,20 @@ export function SupportNetworkGraph({ studentDisplayName, network, selectedId, o
   )
 }
 
-/** Offsets a link's endpoint perpendicular to its direction, so parallel edges never overlap. */
-function perpendicular(link: GraphLink, attr: 'x1' | 'y1' | 'x2' | 'y2'): number {
-  const source = link.source as GraphNode
-  const target = link.target as GraphNode
+/**
+ * `link.source`/`link.target` start as plain string ids (see `buildGraphData`); d3-force's link
+ * force replaces them with the actual node object in place once the simulation initializes. Both
+ * shapes are handled here since React can render a tick before that replacement has happened.
+ */
+function resolveEndpoint(endpoint: GraphLink['source'] | GraphLink['target'], nodesById: Map<string, GraphNode>): GraphNode | undefined {
+  if (typeof endpoint === 'string') {
+    return nodesById.get(endpoint)
+  }
+  return endpoint as GraphNode | undefined
+}
+
+/** Offsets a link's endpoints perpendicular to its direction, so parallel edges never overlap. */
+function perpendicularPoints(source: GraphNode, target: GraphNode, offset: number) {
   const x1 = source.x ?? 0
   const y1 = source.y ?? 0
   const x2 = target.x ?? 0
@@ -196,16 +241,7 @@ function perpendicular(link: GraphLink, attr: 'x1' | 'y1' | 'x2' | 'y2'): number
   const dx = x2 - x1
   const dy = y2 - y1
   const length = Math.hypot(dx, dy) || 1
-  const nx = (-dy / length) * link.offset * 10
-  const ny = (dx / length) * link.offset * 10
-  switch (attr) {
-    case 'x1':
-      return x1 + nx
-    case 'y1':
-      return y1 + ny
-    case 'x2':
-      return x2 + nx
-    case 'y2':
-      return y2 + ny
-  }
+  const nx = (-dy / length) * offset * 10
+  const ny = (dx / length) * offset * 10
+  return { x1: x1 + nx, y1: y1 + ny, x2: x2 + nx, y2: y2 + ny }
 }

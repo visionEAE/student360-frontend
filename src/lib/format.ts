@@ -110,7 +110,12 @@ export function formatPercent(rate: number | null | undefined): string {
 
 /** First letter of the first and last words: `María José Restrepo` → `MR`. */
 export function initialsOf(fullName: string | null | undefined): string {
-  const words = (fullName ?? '').trim().split(/\s+/).filter(Boolean)
+  // Only words that start with a letter count — a trailing annotation like "(madre)" must not
+  // win the last-initial over "Rojas", and a name with no letters at all falls back to "?".
+  const words = (fullName ?? '')
+    .trim()
+    .split(/\s+/)
+    .filter((word) => /^\p{L}/u.test(word))
   if (words.length === 0) {
     return '?'
   }
