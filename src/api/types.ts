@@ -346,6 +346,13 @@ export interface UpsertConnectionRequest {
   note?: string
 }
 
+// ---------- core-service (directory search) ----------
+export interface DirectoryEntry {
+  reference: string
+  kind: 'STUDENT' | 'PROFESSOR'
+  displayName: string
+}
+
 export interface UpsertConnectionResult {
   personReference: string
   weight: number
