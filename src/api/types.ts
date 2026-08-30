@@ -294,3 +294,59 @@ export interface StudentCase {
   reports: SupportReport[]
   unavailableSources: string[]
 }
+
+// ---------- network-service (support network) ----------
+export type PersonKind = 'STUDENT' | 'ADVISOR' | 'PROFESSOR' | 'FAMILY' | 'PEER' | 'COUNSELOR' | 'OTHER'
+export type RelationshipLabel =
+  | 'FAMILY'
+  | 'FRIEND'
+  | 'ADVISOR'
+  | 'MENTOR'
+  | 'COUNSELOR'
+  | 'PROFESSOR'
+  | 'PEER'
+  | 'OTHER'
+export type RaterType = 'SELF' | 'SUPPORT_TEAM'
+
+export interface PersonView {
+  reference: string
+  kind: PersonKind
+  displayName: string | null
+}
+
+export interface EdgeView {
+  weight: number
+  relationshipLabel: RelationshipLabel
+  ratedBy: RaterType
+  updatedAt: string
+}
+
+export interface ConnectionView {
+  person: PersonView
+  edges: EdgeView[]
+}
+
+export interface SupportNetworkView {
+  studentId: string
+  connections: ConnectionView[]
+  primarySupport: ConnectionView | null
+  averageWeight: number | null
+}
+
+export interface PersonRefInput {
+  reference?: string
+  kind: PersonKind
+  displayName?: string
+}
+
+export interface UpsertConnectionRequest {
+  person: PersonRefInput
+  relationshipLabel: RelationshipLabel
+  weight: number
+  note?: string
+}
+
+export interface UpsertConnectionResult {
+  personReference: string
+  weight: number
+}
