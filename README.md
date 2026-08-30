@@ -1,45 +1,65 @@
 # student360-frontend
 
-Minimal React + Vite SPA for Student 360° (port **5173**). It talks only to the gateway
-(`VITE_GATEWAY_URL`, default `http://localhost:8080`). The UI is evidence of the flow, not the
-deliverable: plain CSS, four screens, no design library.
+Minimal React + Vite SPA for Student 360°, built to `pen_design/vision360.pen` on an **atomic
+design** component system (`atoms → molecules → organisms → templates → pages`) and coded against
+`student360-infra/docs/api-contract-v2.md`, through the gateway only (`VITE_GATEWAY_URL`, default
+`http://localhost:8080`).
+
+## Component system
+
+```
+src/design/         tokens.css (colours, type, radii, spacing — 1:1 with the .pen variables), global.css
+src/components/
+  atoms/             Text, Button, Badge, Avatar, Icon, Input, Checkbox, Chip, MoodPill, ProgressBar, Spinner, Divider
+  molecules/         NavItem, StatTile, KeyValueList, CardHeader, SignalRow, WellbeingEntryRow, StudentCell,
+                      StatusBadge/RiskBadge, FilterPill, BarChart, DataTable, FormField, Error/Empty/UnavailablePanel
+  organisms/         Sidebar, Topbar, StudentHeader, ActiveAlertCard, InterventionPlanCard, WellbeingTimelineCard,
+                      Academic/Financial/Engagement/WellbeingSection, StudentsTable, SummaryChips,
+                      SafeSpaceBanner/Footer, DimensionCard, LoginForm, BrandPanel
+  templates/         AuthLayout, AppShell, TwoColumnLayout, StackLayout
+src/pages/           one file per route (below)
+src/lib/             format.ts, labels.ts, signals.ts (alert sentence builder), students.ts (table logic),
+                     wellbeing.ts (safe-space form logic) — all pure and unit-tested
+src/api/             http.ts (token handling) + typed core.ts / lms.ts / support.ts / auth.ts
+```
+
+No UI kit: plain CSS Modules on the design tokens, `lucide-react` for icons, Plus Jakarta Sans from
+Google Fonts.
+
+## Routes
+
+| Path | Screen | Role |
+|---|---|---|
+| `/login` | Login | public |
+| `/advisor/students` | "Mis estudiantes" — overview table, risk chips, filters | ADVISOR/ADMIN |
+| `/advisor/students/:id` | "Advisor - Student 360 View" — alert, plan, wellbeing timeline + side cards | ADVISOR/ADMIN |
+| `/advisor/students/:id/profile` | Full "Student Information Display" (four sections) | ADVISOR/ADMIN |
+| `/advisor/alerts`, `/advisor/alerts/:id` | Alert inbox and detail with reports | ADVISOR/ADMIN |
+| `/advisor/interventions` | Intervention plans, accept/complete | ADVISOR/ADMIN |
+| `/advisor/reports` | Support reports across students | ADVISOR/ADMIN |
+| `/me/overview` | The student's own Student Information Display — **the minimum requirement**: personal, academic, financial data and campus activity in one place | STUDENT |
+| `/me/safe-space` | "Mi espacio seguro" — three dimension cards, draft save/restore, send | STUDENT |
+
+## Data and auth
+
+Unchanged from the previous version: the access token lives in a module-level variable only
+(never `localStorage`/`sessionStorage`); the refresh token is an `HttpOnly` cookie; `src/api/http.ts`
+retries a `401` at most once and shares **one in-flight refresh promise** across concurrent
+requests, so two panels failing at once never trigger SSO reuse detection. Every card that reads
+its own source (`useLoad`) degrades independently: a `503 {section}` from the gateway renders
+`UnavailablePanel`, not a broken page.
 
 ## Run
 
 ```bash
-cp .env.example .env      # optional; defaults to the local gateway
 npm install
-npm run dev               # http://localhost:5173
-npm test                  # vitest: single in-flight refresh, error surfacing
-npm run build             # type-check + bundle
+npm run dev     # http://localhost:5173, needs the gateway on :8080
 ```
 
-Demo accounts (password `student360`): `maria.rojas@u.icesi.edu.co` (student at risk, S-1003),
-`ana.torres@u.icesi.edu.co` (student, S-1001), `carlos.mejia@icesi.edu.co` (advisor A-2001),
-`diana.perez@icesi.edu.co` (advisor A-2002, not assigned to S-1003).
+## Verify
 
-## Token handling (`src/auth/session.ts`, `src/api/http.ts`)
-
-* **Access token in memory only** — a module-level store, never `localStorage`/`sessionStorage`,
-  so an injected script finds no persisted credential.
-* **Refresh token in the `HttpOnly; SameSite=Strict; Path=/api/auth` cookie** issued by the SSO;
-  every request uses `credentials: 'include'` (SPA and gateway are both `localhost`, so the
-  cookie is same-site).
-* On load the app attempts one silent `POST /api/auth/refresh` to restore the session.
-* On `401`: exactly **one** refresh attempt and **one** retry of the original request; if the
-  refresh fails the state is cleared and the user is sent to login.
-* **Single in-flight refresh**: concurrent `401`s share one refresh promise. Two parallel
-  refreshes would present the same refresh token twice and the SSO would (correctly) read the
-  second as reuse and revoke the whole session. Covered by `src/api/http.test.ts`.
-* Every request carries a generated `X-Request-Id`; errors (RFC 7807) show it so it can be
-  quoted and matched against the audit trail.
-
-## Screens
-
-| Route | Role | Content |
-|---|---|---|
-| `/login` | — | credentials form, role-based redirect |
-| `/me` | `STUDENT` | 360° view: profile, academic status, financial status, engagement — each panel loads and fails on its own; a `503 {section: "engagement"}` from the gateway renders that panel as unavailable while the rest shows |
-| `/wellbeing` | `STUDENT` | level 1–5 + optional comment; shows whether an alert was generated |
-| `/inbox` | `ADVISOR`, `ADMIN` | alerts for actively assigned students |
-| `/alerts/:id` | `ADVISOR`, `ADMIN` | triggering signals, suggested plan, reports, add-report form; `403` renders as "Not allowed" |
+```
+npm run build   # tsc -b && vite build
+npm test        # vitest --run — format/labels/signals/students/wellbeing logic + the http single-flight refresh
+npm run lint    # oxlint
+```
