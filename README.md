@@ -39,6 +39,23 @@ Google Fonts.
 | `/advisor/reports` | Support reports across students | ADVISOR/ADMIN |
 | `/me/overview` | The student's own Student Information Display — **the minimum requirement**: personal, academic, financial data and campus activity in one place | STUDENT |
 | `/me/safe-space` | "Mi espacio seguro" — three dimension cards, draft save/restore, send | STUDENT |
+| `/me/support-network` | "Mi red de apoyo" — interactive weighted graph, edit/create connections | STUDENT |
+
+The support network also appears as a section on `/advisor/students/:id`, read from
+`network-service` and editable by the advisor (a `SUPPORT_TEAM`-tagged edge, independent of the
+student's own `SELF` edge on the same person).
+
+## Support network graph
+
+`SupportNetworkGraph` renders `network-service`'s weighted `SUPPORTS` graph as an interactive
+force-directed diagram: **d3-force** computes the layout (link/charge/collision forces), **d3-drag**
+makes nodes draggable, **d3-zoom** handles pan/zoom — all three are focused d3 submodules (not the
+full `d3` bundle), rendered as plain SVG so the graph stays themeable with the app's own CSS
+tokens instead of a canvas/WebGL library's own styling model. `src/lib/networkGraph.ts` is the
+pure, unit-tested function that turns a `SupportNetworkView` into `{nodes, links}`: a person rated
+by both the student (`SELF`) and the support team (`SUPPORT_TEAM`) becomes two parallel, offset
+lines rather than one merged number. Editing is scoped to the viewer's own edge; the other
+rater's edge on the same person is always shown, never overwritten.
 
 ## Data and auth
 
