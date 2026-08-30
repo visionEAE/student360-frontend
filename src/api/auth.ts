@@ -1,4 +1,5 @@
-import { session, type UserProfile } from '../auth/session'
+import { session } from '../auth/session'
+import type { UserProfile } from './types'
 import { request } from './http'
 
 interface TokenResponse {

@@ -3,13 +3,9 @@
  * sessionStorage, so a script injected into the page has no persisted credential to read. The
  * refresh token is an HttpOnly cookie the browser sends on its own.
  */
-export interface UserProfile {
-  id: string
-  email: string
-  fullName: string
-  roles: string[]
-  externalReference: string | null
-}
+import type { UserProfile } from '../api/types'
+
+export type { UserProfile }
 
 type Listener = () => void
 
