@@ -15,6 +15,7 @@ import { AdvisorInterventionsPage } from './pages/AdvisorInterventionsPage'
 import { AdvisorReportsPage } from './pages/AdvisorReportsPage'
 import { StudentOverviewPage } from './pages/StudentOverviewPage'
 import { StudentSafeSpacePage } from './pages/StudentSafeSpacePage'
+import { StudentSupportNetworkPage } from './pages/StudentSupportNetworkPage'
 
 function RequireRole({ roles, children }: { roles: string[]; children: ReactNode }) {
   const { authenticated, profile } = useSession()
@@ -129,6 +130,14 @@ export default function App() {
           element={
             <RequireRole roles={STUDENT_ROLES}>
               <StudentSafeSpacePage />
+            </RequireRole>
+          }
+        />
+        <Route
+          path="/me/support-network"
+          element={
+            <RequireRole roles={STUDENT_ROLES}>
+              <StudentSupportNetworkPage />
             </RequireRole>
           }
         />

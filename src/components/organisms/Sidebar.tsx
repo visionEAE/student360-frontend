@@ -1,4 +1,4 @@
-import { BarChart3, Bell, HeartHandshake, LayoutDashboard, ShieldCheck, Users } from 'lucide-react'
+import { BarChart3, Bell, HeartHandshake, LayoutDashboard, Share2, ShieldCheck, Users } from 'lucide-react'
 import { Avatar, Text } from '../atoms'
 import { NavItem } from '../molecules'
 import { useSession } from '../../auth/useSession'
@@ -17,6 +17,7 @@ const ADVISOR_ITEMS = [
 const STUDENT_ITEMS = [
   { to: '/me/overview', icon: LayoutDashboard, label: 'Mi vista 360°' },
   { to: '/me/safe-space', icon: ShieldCheck, label: 'Mi espacio seguro' },
+  { to: '/me/support-network', icon: Share2, label: 'Mi red de apoyo' },
 ]
 
 /** Left navigation shared by every authenticated screen; items depend on the caller's role. */
