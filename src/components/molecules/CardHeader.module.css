@@ -1,0 +1,3 @@
+.header { display: flex; align-items: center; justify-content: space-between; gap: var(--space-5); }
+.titleRow { display: flex; align-items: center; gap: var(--space-5); }
+.iconWrap { display: flex; align-items: center; justify-content: center; width: 34px; height: 34px; border-radius: 9px; background: var(--color-primary-tint); flex-shrink: 0; color: var(--color-primary); }

@@ -1,0 +1,3 @@
+.chart { display: flex; align-items: flex-end; gap: 16px; }
+.col { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.bar { width: 36px; border-radius: 5px 5px 0 0; }
