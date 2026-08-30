@@ -1,6 +1,6 @@
 import { session } from '../auth/session'
 import type { UserProfile } from './types'
-import { request } from './http'
+import { refreshSession, request } from './http'
 
 interface TokenResponse {
   accessToken: string
@@ -29,7 +29,6 @@ export async function logout(): Promise<void> {
 
 /** Silent restore on page load: the HttpOnly cookie may still hold a valid refresh token. */
 export async function restoreSession(): Promise<UserProfile | null> {
-  const { refreshSession } = await import('./http')
   const refreshed = await refreshSession()
   if (!refreshed) {
     return null
