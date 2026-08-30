@@ -1,0 +1,10 @@
+.spinner {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 3px solid var(--color-primary-tint);
+  border-top-color: var(--color-primary);
+  animation: spin 700ms linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.center { display: flex; justify-content: center; padding: var(--space-11); }
