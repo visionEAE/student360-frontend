@@ -1,0 +1,36 @@
+# Thin caller: the logic lives in visionEAE/workflows. Push to main deploys; the manual trigger
+# is always available. Neutral no-op until the GCP variables exist.
+name: deploy
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - "**.md"
+      - "docs/**"
+      - ".gitignore"
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: Reason for the manual deployment (optional)
+        required: false
+        default: Manual trigger from GitHub UI
+
+concurrency:
+  group: deploy-s360-web
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  ci:
+    uses: visionEAE/workflows/.github/workflows/frontend-ci.yml@main
+
+  deploy:
+    needs: ci
+    if: vars.GCP_WIF_PROVIDER != ''
+    uses: visionEAE/workflows/.github/workflows/frontend-deploy.yml@main
+    with:
+      service: s360-web
