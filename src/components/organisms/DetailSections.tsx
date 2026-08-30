@@ -60,7 +60,9 @@ export function AcademicSection({ status, programName }: { status: AcademicStatu
       <div style={{ display: 'flex', gap: 28 }}>
         <div style={{ width: 260, display: 'flex', flexDirection: 'column', gap: 10 }}>
           <Text variant="label">Evolución del promedio por semestre</Text>
-          <BarChart data={gpaBars} />
+          <div style={{ overflowX: 'auto' }}>
+            <BarChart data={gpaBars} />
+          </div>
         </div>
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 10, minWidth: 0 }}>
           <Text variant="label">Materias actuales</Text>
