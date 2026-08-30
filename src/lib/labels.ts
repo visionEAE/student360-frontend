@@ -3,8 +3,11 @@ import type {
   Dimension,
   Mood,
   Participation,
+  PersonKind,
   PlanStatus,
   PlanType,
+  RaterType,
+  RelationshipLabel,
   RequestStatus,
   RequestType,
   RiskLevel,
@@ -225,4 +228,29 @@ export function trendLabel(trend: 'UP' | 'DOWN' | 'STABLE' | null | undefined): 
     default:
       return { label: 'Sin datos', tone: 'neutral' }
   }
+}
+
+export const PERSON_KIND_LABELS: Record<PersonKind, string> = {
+  STUDENT: 'Estudiante',
+  ADVISOR: 'Acompañante',
+  PROFESSOR: 'Profesor(a)',
+  FAMILY: 'Familia',
+  PEER: 'Amigo(a)',
+  COUNSELOR: 'Consejero(a)',
+  OTHER: 'Otro',
+}
+
+export const RELATIONSHIP_LABEL_LABELS: Record<RelationshipLabel, string> = {
+  FAMILY: 'Familia',
+  FRIEND: 'Amistad',
+  ADVISOR: 'Acompañamiento',
+  MENTOR: 'Mentoría',
+  COUNSELOR: 'Consejería',
+  PROFESSOR: 'Docencia',
+  PEER: 'Entre pares',
+  OTHER: 'Otro',
+}
+
+export function raterLabel(rater: RaterType): string {
+  return rater === 'SELF' ? 'Tú' : 'Equipo de acompañamiento'
 }
