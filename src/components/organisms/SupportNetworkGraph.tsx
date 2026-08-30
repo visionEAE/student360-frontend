@@ -12,6 +12,7 @@ const KIND_COLOR: Record<string, string> = {
   STUDENT_CENTER: 'var(--color-primary)',
   FAMILY: 'var(--color-danger)',
   PEER: 'var(--color-info)',
+  STUDENT: 'var(--color-info)',
   ADVISOR: 'var(--color-primary)',
   PROFESSOR: 'var(--color-success)',
   COUNSELOR: 'var(--color-warning)',

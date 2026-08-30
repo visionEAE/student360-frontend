@@ -141,8 +141,13 @@ export function AdvisorStudentCasePage() {
               )
               return selectedConnection ? (
                 <ConnectionDetailPanel
+                  // A different person means a different form: remount so the rating fields reset.
+                  key={selectedConnection.person.reference}
                   connection={selectedConnection}
                   viewerRaterType="SUPPORT_TEAM"
+                  loadDetail={() =>
+                    networkApi.connectionAsAdvisor(studentId, selectedConnection.person.reference)
+                  }
                   onSave={(body) =>
                     networkApi.updateConnection(studentId, selectedConnection.person.reference, body).then(() => reloadNetwork())
                   }

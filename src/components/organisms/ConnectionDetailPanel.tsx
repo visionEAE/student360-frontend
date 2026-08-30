@@ -3,9 +3,17 @@ import { Trash2 } from 'lucide-react'
 import { Badge, Button, Text } from '../atoms'
 import { Card } from './Card'
 import { FormField } from '../molecules'
-import type { ConnectionView, RaterType, RelationshipLabel, UpsertConnectionRequest } from '../../api/types'
+import type {
+  ConnectionDetail,
+  ConnectionView,
+  RaterType,
+  RelationshipLabel,
+  UpsertConnectionRequest,
+} from '../../api/types'
 import { PERSON_KIND_LABELS, RELATIONSHIP_LABEL_LABELS, raterLabel } from '../../lib/labels'
 import { formatDate } from '../../lib/format'
+import { useLoad } from '../../lib/useLoad'
+import { ContactCard } from './ContactCard'
 import styles from './ConnectionDetailPanel.module.css'
 
 const RELATIONSHIP_OPTIONS = Object.keys(RELATIONSHIP_LABEL_LABELS) as RelationshipLabel[]
@@ -14,13 +22,28 @@ interface Props {
   connection: ConnectionView
   /** Which rater identity the current viewer edits under: the student rates as SELF, any advisor as SUPPORT_TEAM. */
   viewerRaterType: RaterType
+  /**
+   * Fetches the person's contact card. Passed in rather than called here because the student and
+   * the advisor read the same card through different endpoints, and only the page knows which.
+   */
+  loadDetail: () => Promise<ConnectionDetail>
   onSave: (body: UpsertConnectionRequest) => Promise<void>
   onDelete: () => Promise<void>
   onClose: () => void
 }
 
 /** The person's card: everyone's rating is shown, but only the viewer's own edge is editable. */
-export function ConnectionDetailPanel({ connection, viewerRaterType, onSave, onDelete, onClose }: Props) {
+export function ConnectionDetailPanel({
+  connection,
+  viewerRaterType,
+  loadDetail,
+  onSave,
+  onDelete,
+  onClose,
+}: Props) {
+  // Re-fetched whenever a different person is opened; a failure just leaves the card without
+  // contact details rather than taking the ratings down with it.
+  const { data: detail, loading: loadingDetail } = useLoad(loadDetail, [connection.person.reference])
   const ownEdge = connection.edges.find((edge) => edge.ratedBy === viewerRaterType) ?? null
   const otherEdges = connection.edges.filter((edge) => edge.ratedBy !== viewerRaterType)
 
@@ -62,7 +85,9 @@ export function ConnectionDetailPanel({ connection, viewerRaterType, onSave, onD
     <Card>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
         <div>
-          <Text variant="cardTitle">{connection.person.displayName ?? connection.person.reference}</Text>
+          <Text variant="cardTitle">
+            {detail?.person.displayName ?? connection.person.displayName ?? connection.person.reference}
+          </Text>
           <Text variant="caption" color="var(--color-text-muted)">
             {PERSON_KIND_LABELS[connection.person.kind]}
           </Text>
@@ -71,6 +96,8 @@ export function ConnectionDetailPanel({ connection, viewerRaterType, onSave, onD
           Cerrar
         </Button>
       </div>
+
+      <ContactCard contact={detail?.contact ?? null} loading={loadingDetail} />
 
       {otherEdges.length > 0 ? (
         <div className={styles.section}>

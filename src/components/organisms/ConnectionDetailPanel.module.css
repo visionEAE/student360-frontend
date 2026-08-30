@@ -22,3 +22,17 @@
   background: var(--color-canvas);
   color: var(--color-ink);
 }
+
+.contact {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-6);
+  margin-top: var(--space-6);
+  border-radius: var(--radius-lg);
+  background: var(--color-canvas);
+}
+.contactRow { display: flex; align-items: center; gap: var(--space-4); }
+.contactRow a { color: var(--color-primary); text-decoration: none; word-break: break-all; }
+.contactRow a:hover { text-decoration: underline; }
+.contactHead { display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); }

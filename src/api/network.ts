@@ -1,5 +1,10 @@
 import { request } from './http'
-import type { SupportNetworkView, UpsertConnectionRequest, UpsertConnectionResult } from './types'
+import type {
+  ConnectionDetail,
+  SupportNetworkView,
+  UpsertConnectionRequest,
+  UpsertConnectionResult,
+} from './types'
 
 const studentPath = (ref: string) => `/api/network/students/${encodeURIComponent(ref)}`
 const advisorPath = (ref: string) => `/api/network/advisors/me/students/${encodeURIComponent(ref)}`
@@ -12,6 +17,16 @@ export const networkApi = {
   supportNetwork: (studentRef: string) => request<SupportNetworkView>(`${studentPath(studentRef)}/support-network`),
   supportNetworkAsAdvisor: (studentRef: string) =>
     request<SupportNetworkView>(`${advisorPath(studentRef)}/support-network`),
+
+  /** One person of the network, opened: contact details and a short summary. */
+  connection: (studentRef: string, personReference: string) =>
+    request<ConnectionDetail>(
+      `${studentPath(studentRef)}/connections/${encodeURIComponent(personReference)}`,
+    ),
+  connectionAsAdvisor: (studentRef: string, personReference: string) =>
+    request<ConnectionDetail>(
+      `${advisorPath(studentRef)}/connections/${encodeURIComponent(personReference)}`,
+    ),
 
   createConnection: (studentRef: string, body: UpsertConnectionRequest) =>
     request<UpsertConnectionResult>(`${studentPath(studentRef)}/connections`, { body }),

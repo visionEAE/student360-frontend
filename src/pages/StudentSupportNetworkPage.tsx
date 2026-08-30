@@ -62,8 +62,11 @@ export function StudentSupportNetworkPage() {
 
         {selectedConnection ? (
           <ConnectionDetailPanel
+            // A different person means a different form: remount so the rating fields reset.
+            key={selectedConnection.person.reference}
             connection={selectedConnection}
             viewerRaterType="SELF"
+            loadDetail={() => networkApi.connection(reference, selectedConnection.person.reference)}
             onSave={(body) => networkApi.updateConnection(reference, selectedConnection.person.reference, body).then(() => reload())}
             onDelete={() => networkApi.removeConnection(reference, selectedConnection.person.reference).then(() => reload())}
             onClose={() => setSelectedId(null)}

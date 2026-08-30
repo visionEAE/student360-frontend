@@ -28,6 +28,9 @@ export function NewConnectionForm({ onSubmit }: { onSubmit: (body: UpsertConnect
   const [kind, setKind] = useState<PersonKind>('FAMILY')
   const [displayName, setDisplayName] = useState('')
   const [pickedPerson, setPickedPerson] = useState<PickedPerson | null>(null)
+  const [email, setEmail] = useState('')
+  const [phone, setPhone] = useState('')
+  const [summary, setSummary] = useState('')
   const [relationshipLabel, setRelationshipLabel] = useState<RelationshipLabel>('FAMILY')
   const [weight, setWeight] = useState(5)
   const [note, setNote] = useState('')
@@ -48,10 +51,20 @@ export function NewConnectionForm({ onSubmit }: { onSubmit: (body: UpsertConnect
     setKind(nextKind)
     setPickedPerson(null)
     setDisplayName('')
+    setEmail('')
+    setPhone('')
+    setSummary('')
   }
 
   const submit = async () => {
-    let person: { kind: PersonKind; reference?: string; displayName?: string }
+    let person: {
+      kind: PersonKind
+      reference?: string
+      displayName?: string
+      email?: string
+      phone?: string
+      summary?: string
+    }
     if (directoryKind) {
       if (!pickedPerson) {
         setValidationError('Busca y selecciona a la persona.')
@@ -63,7 +76,13 @@ export function NewConnectionForm({ onSubmit }: { onSubmit: (body: UpsertConnect
         setValidationError('El nombre es obligatorio.')
         return
       }
-      person = { kind, displayName: displayName.trim() }
+      person = {
+        kind,
+        displayName: displayName.trim(),
+        email: email.trim() || undefined,
+        phone: phone.trim() || undefined,
+        summary: summary.trim() || undefined,
+      }
     }
     setValidationError(null)
     setSubmitting(true)
@@ -72,6 +91,9 @@ export function NewConnectionForm({ onSubmit }: { onSubmit: (body: UpsertConnect
       setOpen(false)
       setDisplayName('')
       setPickedPerson(null)
+      setEmail('')
+      setPhone('')
+      setSummary('')
       setNote('')
       setWeight(5)
     } finally {
@@ -110,6 +132,34 @@ export function NewConnectionForm({ onSubmit }: { onSubmit: (body: UpsertConnect
               placeholder="¿Cómo se llama?"
             />
           </FormField>
+        )}
+        {directoryKind ? null : (
+          <>
+            <FormField label="Correo (opcional)">
+              <input
+                type="email"
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+                placeholder="nombre@ejemplo.com"
+              />
+            </FormField>
+            <FormField label="Teléfono (opcional)">
+              <input
+                type="tel"
+                value={phone}
+                onChange={(event) => setPhone(event.target.value)}
+                placeholder="+57 300 000 0000"
+              />
+            </FormField>
+            <FormField label="¿Quién es? (opcional)">
+              <textarea
+                value={summary}
+                onChange={(event) => setSummary(event.target.value)}
+                rows={2}
+                placeholder="Una línea para recordar quién es y cómo te apoya…"
+              />
+            </FormField>
+          </>
         )}
         <FormField label="Tipo de relación">
           <select value={relationshipLabel} onChange={(event) => setRelationshipLabel(event.target.value as RelationshipLabel)}>
