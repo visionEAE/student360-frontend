@@ -1,0 +1,7 @@
+.grid { display: flex; gap: var(--space-9); align-items: flex-start; }
+.main { width: var(--column-main); flex-shrink: 0; display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+.side { width: var(--column-side); flex-shrink: 0; display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+@media (max-width: 1180px) {
+  .grid { flex-direction: column; }
+  .main, .side { width: 100%; }
+}
