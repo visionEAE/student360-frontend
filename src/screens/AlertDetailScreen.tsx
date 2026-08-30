@@ -2,7 +2,7 @@ import { useState, type FormEvent } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { addReport, fetchAlert } from '../api/advisor'
 import { ErrorNotice, Panel } from '../components/Panel'
-import { useLoad } from '../components/useLoad'
+import { useLoad } from '../lib/useLoad'
 
 export function AlertDetailScreen() {
   const { id = '' } = useParams()

@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom'
 import { fetchInbox } from '../api/advisor'
 import { useSession } from '../auth/useSession'
 import { Panel } from '../components/Panel'
-import { useLoad } from '../components/useLoad'
+import { useLoad } from '../lib/useLoad'
 
 export function InboxScreen() {
   const { profile } = useSession()

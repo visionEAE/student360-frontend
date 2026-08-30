@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom'
 import { fetchAcademicStatus, fetchEngagementSignals, fetchFinancialStatus, fetchStudent } from '../api/student'
 import { useSession } from '../auth/useSession'
 import { Panel } from '../components/Panel'
-import { useLoad } from '../components/useLoad'
+import { useLoad } from '../lib/useLoad'
 
 const money = (value: number) =>
   new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(value)
