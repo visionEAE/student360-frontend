@@ -1,0 +1,5 @@
+.top { display: flex; gap: var(--space-5); align-items: center; }
+.iconWrap { display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: var(--radius-xl); background: var(--color-primary-tint); color: var(--color-primary); flex-shrink: 0; }
+.titleCol { display: flex; flex-direction: column; gap: 1px; }
+.moodRow { display: flex; gap: var(--space-5); }
+.chipsRow { display: flex; gap: var(--space-3); flex-wrap: wrap; }

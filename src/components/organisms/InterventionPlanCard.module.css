@@ -1,0 +1,5 @@
+.top { display: flex; align-items: center; justify-content: space-between; }
+.typeRow { display: flex; gap: var(--space-3); align-items: center; }
+.iconWrap { display: flex; align-items: center; justify-content: center; width: 34px; height: 34px; border-radius: var(--radius-md); background: var(--color-primary-tint); color: var(--color-primary); flex-shrink: 0; }
+.typeText { display: flex; flex-direction: column; gap: 1px; }
+.actions { display: flex; gap: var(--space-4); }
