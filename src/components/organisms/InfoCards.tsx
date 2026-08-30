@@ -59,7 +59,7 @@ export function EngagementCard({ signals }: { signals: EngagementSignals }) {
           label="entregas a tiempo"
         />
         <StatTile
-          value={`${Math.max(0, signals.activeCourses - signals.coursesWithoutActivity)} de ${signals.activeCourses}`}
+          value={`${signals.coursesWithoutActivity} de ${signals.activeCourses}`}
           label="cursos sin actividad"
         />
       </div>
