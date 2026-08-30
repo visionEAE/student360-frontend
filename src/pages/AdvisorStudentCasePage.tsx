@@ -1,20 +1,24 @@
 import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { Spinner, Text } from '../components/atoms'
-import { ErrorNotice, UnavailablePanel } from '../components/molecules'
+import { EmptyState, ErrorNotice, UnavailablePanel } from '../components/molecules'
 import { AppShell, TwoColumnLayout } from '../components/templates'
 import {
   AcademicStatusCard,
   ActiveAlertCard,
   AssignmentCard,
+  ConnectionDetailPanel,
   EngagementCard,
   FinancialStatusCard,
   InterventionPlanCard,
+  NewConnectionForm,
   StudentHeader,
+  SupportNetworkGraph,
   Topbar,
   WellbeingTimelineCard,
 } from '../components/organisms'
 import { supportApi } from '../api/support'
+import { networkApi } from '../api/network'
 import { useLoad } from '../lib/useLoad'
 
 /** "Advisor - Student 360 View": the working view an advisor opens from the students table. */
@@ -23,6 +27,12 @@ export function AdvisorStudentCasePage() {
   const navigate = useNavigate()
   const { data, loading, error, reload } = useLoad(() => supportApi.studentCase(studentId), [studentId])
   const [accepting, setAccepting] = useState(false)
+  const [selectedPersonId, setSelectedPersonId] = useState<string | null>(null)
+  const {
+    data: network,
+    error: networkError,
+    reload: reloadNetwork,
+  } = useLoad(() => networkApi.supportNetworkAsAdvisor(studentId), [studentId])
 
   if (loading) {
     return (
@@ -108,6 +118,46 @@ export function AdvisorStudentCasePage() {
             </>
           }
         />
+        <div>
+          <Text variant="cardTitle">Red de apoyo</Text>
+          {networkError ? (
+            <ErrorNotice error={networkError} />
+          ) : !network ? (
+            <Spinner center />
+          ) : network.connections.length === 0 ? (
+            <EmptyState label="Esta estudiante aún no tiene una red de apoyo registrada." />
+          ) : (
+            <SupportNetworkGraph
+              studentDisplayName={data.student.fullName}
+              network={network}
+              selectedId={selectedPersonId}
+              onSelect={setSelectedPersonId}
+            />
+          )}
+          {network && selectedPersonId ? (
+            (() => {
+              const selectedConnection = network.connections.find(
+                (connection) => connection.person.reference === selectedPersonId,
+              )
+              return selectedConnection ? (
+                <ConnectionDetailPanel
+                  connection={selectedConnection}
+                  viewerRaterType="SUPPORT_TEAM"
+                  onSave={(body) =>
+                    networkApi.updateConnection(studentId, selectedConnection.person.reference, body).then(() => reloadNetwork())
+                  }
+                  onDelete={() =>
+                    networkApi.removeConnection(studentId, selectedConnection.person.reference).then(() => reloadNetwork())
+                  }
+                  onClose={() => setSelectedPersonId(null)}
+                />
+              ) : null
+            })()
+          ) : null}
+          {network ? (
+            <NewConnectionForm onSubmit={(body) => networkApi.createConnection(studentId, body).then(() => reloadNetwork())} />
+          ) : null}
+        </div>
       </div>
     </AppShell>
   )
