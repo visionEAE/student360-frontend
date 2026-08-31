@@ -1,4 +1,7 @@
-import { BarChart3, Bell, HeartHandshake, LayoutDashboard, Share2, ShieldCheck, Users } from 'lucide-react'
+import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { BarChart3, Bell, HeartHandshake, LayoutDashboard, LogOut, Share2, ShieldCheck, Users } from 'lucide-react'
+import { logout } from '../../api/auth'
 import { Avatar, Text } from '../atoms'
 import { NavItem } from '../molecules'
 import { useSession } from '../../auth/useSession'
@@ -23,8 +26,19 @@ const STUDENT_ITEMS = [
 /** Left navigation shared by every authenticated screen; items depend on the caller's role. */
 export function Sidebar() {
   const { profile } = useSession()
+  const navigate = useNavigate()
+  const [leaving, setLeaving] = useState(false)
   const isAdvisor = profile?.roles.some((role) => role === 'ADVISOR' || role === 'ADMIN') ?? false
   const items = isAdvisor ? ADVISOR_ITEMS : STUDENT_ITEMS
+
+  async function handleLogout() {
+    setLeaving(true)
+    try {
+      await logout()
+    } finally {
+      navigate('/login', { replace: true })
+    }
+  }
 
   return (
     <aside className={styles.sidebar}>
@@ -45,6 +59,16 @@ export function Sidebar() {
             <Text variant="label">{profile.fullName}</Text>
             <Text variant="tiny">{roleLabel(profile.roles)}</Text>
           </div>
+          <button
+            type="button"
+            className={styles.logout}
+            title="Cerrar sesión"
+            aria-label="Cerrar sesión"
+            onClick={handleLogout}
+            disabled={leaving}
+          >
+            <LogOut size={16} />
+          </button>
         </div>
       ) : null}
     </aside>
